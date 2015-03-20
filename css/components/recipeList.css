@@ -1,0 +1,11 @@
+.recipe-list .list-group {
+  box-shadow: none;
+}
+
+.recipe-list .list-group-item {
+  border: 0px;
+}
+
+.recipe-list .list-group-item .rating {
+  float:right;
+}
