@@ -33,7 +33,8 @@ var RecipeStore = Reflux.createStore({
         description: "Pale ale is a beer made by warm fermentation using predominantly pale malt."
       },
       rating: 4,
-      brewed: false
+      brewed: false,
+      favorite: true
     },
     {
       id: 2,
@@ -47,7 +48,8 @@ var RecipeStore = Reflux.createStore({
           "in the 18th century, and is thought to come from its popularity with street and river porters."
       },
       rating: 3,
-      brewed: true
+      brewed: true,
+      favorite: true
     },
     {
       id: 3,
@@ -60,7 +62,8 @@ var RecipeStore = Reflux.createStore({
         " Pale lager is the most widely consumed and commercially available style of beer in the world"
       },
       rating: 1,
-      brewed: false
+      brewed: false,
+      favorite: false
     }]
   }
 });

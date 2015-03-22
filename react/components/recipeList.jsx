@@ -4,8 +4,11 @@ var React         = require('react');
 var Reflux        = require('reflux');
 var _             = require('lodash');
 var Bs            = require('react-bootstrap');
+var Router        = require('react-router');
+
 var ListGroup     = Bs.ListGroup;
 var Glyphicon     = Bs.Glyphicon;
+var State         = Router.State;
 
 var RecipeActions  = require('../actions/recipeActions');
 var RecipeStore    = require('../stores/recipeStore');
@@ -14,27 +17,61 @@ var RecipeDetail   = require('./recipeDetail.jsx');
 var RecipeListItem = require('./recipeListItem.jsx');
 
 var RecipeList = React.createClass({
-  mixins: [Reflux.connect(RecipeStore,'recipes')],
-  filterRecipes: function(filter) {
+  mixins: [Reflux.connect(RecipeStore,'recipes'), State],
+  filterRecipes: function() {
     var recipes = this.state.recipes,
-        filtered;
+        filters = this.getQuery(),
+        filtered = recipes;
 
-    if (filter) {
+    if (filters !== null && filters !== undefined && !_.isEmpty(filters)) {
       filtered = _.select(recipes, function(recipe) {
-        return recipe.id == filter;
+        var show = false;
+
+        for(var filter in filters) {
+          if (recipe[filter] !== undefined &&
+            recipe[filter] == !!filters[filter]) { //booleanify
+
+            show = true;
+            break;
+          }
+        }
+
+        return show;
       });
     }
 
     return filtered;
+  },
+  getRecipe: function(id) {
+    var recipes = this.state.recipes,
+        recipe;
+
+    if (id !== undefined && id !== null) {
+      recipe = _.select(recipes, function(curRecipe) {
+        return curRecipe.id == id;
+      });
+    }
+
+    return recipe;
   },
   renderContent: function() {
     var content,
         recipes = this.state.recipes,
         recipeId = this.props.params.recipeId;
 
+    //id specified, get individual recipe
     if (recipeId !== undefined) {
-      recipes = this.filterRecipes(recipeId);
+      recipes = this.getRecipe(recipeId);
+    } else { //list page, apply any filters
+      recipes = this.filterRecipes();
     }
+
+    content = this.renderRecipeContent(recipes);
+
+    return content;
+  },
+  renderRecipeContent: function(recipes) {
+    var content;
 
     if(recipes && recipes.length > 0) {
       //single result, render a detail

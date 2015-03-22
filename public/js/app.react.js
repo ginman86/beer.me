@@ -41246,15 +41246,14 @@ var categoryActions = require('../actions/categoryActions');
 var categoryStore   = require('../stores/categoryStore');
 var _               = require('lodash');
 var Bs              = require('react-bootstrap');
+var RouterBs        = require('react-router-bootstrap');
 
 var Nav             = Bs.Nav;
 var NavItem         = Bs.NavItem;
+var NavItemLink     = RouterBs.NavItemLink;
 
 var MainSideNav = React.createClass({displayName: "MainSideNav",
   mixins: [Reflux.connect(categoryStore, 'categories')],
-  handleNavChanged: function(key) {
-    console.log("nav item selected", key);
-  },
   setActiveCategory: function() {
     //todo
   },
@@ -41281,11 +41280,11 @@ var MainSideNav = React.createClass({displayName: "MainSideNav",
 
     return (
       React.createElement("div", {className: "side-nav col-md-2 col-lg-2 col-sm-2"}, 
-        React.createElement(Nav, {bsStyle: "pills", stacked: true, activeKey: 1, onSelect: this.handleNavChanged}, 
-          React.createElement(NavItem, {eventKey: 1}, "Recipes"), 
-          React.createElement(NavItem, {eventKey: 2}, "Favorites"), 
-          React.createElement(NavItem, {eventKey: 3}, "To-Brew"), 
-          React.createElement(NavItem, {eventKey: 3, disabled: true}, "Categories"), 
+        React.createElement(Nav, {bsStyle: "pills", stacked: true, activeKey: 1}, 
+          React.createElement(NavItemLink, {eventKey: 1, to: "recipes"}, "Recipes"), 
+          React.createElement(NavItemLink, {eventKey: 2, to: "recipes", query: {favorite: true}}, "Favorites"), 
+          React.createElement(NavItemLink, {eventKey: 3, to: "recipes", query: {brewed: false}}, "To-Brew"), 
+          React.createElement(NavItem, {eventKey: 4, disabled: true}, "Categories"), 
           React.createElement(Nav, {className: categoryClasses, bsStyle: "pills", stacked: true, activeKey: 2}, 
             categories
           )
@@ -41301,7 +41300,7 @@ module.exports = MainSideNav;
 
 
 
-},{"../actions/categoryActions":291,"../stores/categoryStore":300,"lodash":2,"react-bootstrap":53,"react/addons":109,"reflux":271}],295:[function(require,module,exports){
+},{"../actions/categoryActions":291,"../stores/categoryStore":300,"lodash":2,"react-bootstrap":53,"react-router-bootstrap":68,"react/addons":109,"reflux":271}],295:[function(require,module,exports){
 'use strict';
 
 var React       = require('react');
@@ -41406,8 +41405,11 @@ var React         = require('react');
 var Reflux        = require('reflux');
 var _             = require('lodash');
 var Bs            = require('react-bootstrap');
+var Router        = require('react-router');
+
 var ListGroup     = Bs.ListGroup;
 var Glyphicon     = Bs.Glyphicon;
+var State         = Router.State;
 
 var RecipeActions  = require('../actions/recipeActions');
 var RecipeStore    = require('../stores/recipeStore');
@@ -41416,27 +41418,61 @@ var RecipeDetail   = require('./recipeDetail.jsx');
 var RecipeListItem = require('./recipeListItem.jsx');
 
 var RecipeList = React.createClass({displayName: "RecipeList",
-  mixins: [Reflux.connect(RecipeStore,'recipes')],
-  filterRecipes: function(filter) {
+  mixins: [Reflux.connect(RecipeStore,'recipes'), State],
+  filterRecipes: function() {
     var recipes = this.state.recipes,
-        filtered;
+        filters = this.getQuery(),
+        filtered = recipes;
 
-    if (filter) {
+    if (filters !== null && filters !== undefined && !_.isEmpty(filters)) {
       filtered = _.select(recipes, function(recipe) {
-        return recipe.id == filter;
+        var show = false;
+
+        for(var filter in filters) {
+          if (recipe[filter] !== undefined &&
+            recipe[filter] == !!filters[filter]) { //booleanify
+
+            show = true;
+            break;
+          }
+        }
+
+        return show;
       });
     }
 
     return filtered;
+  },
+  getRecipe: function(id) {
+    var recipes = this.state.recipes,
+        recipe;
+
+    if (id !== undefined && id !== null) {
+      recipe = _.select(recipes, function(curRecipe) {
+        return curRecipe.id == id;
+      });
+    }
+
+    return recipe;
   },
   renderContent: function() {
     var content,
         recipes = this.state.recipes,
         recipeId = this.props.params.recipeId;
 
+    //id specified, get individual recipe
     if (recipeId !== undefined) {
-      recipes = this.filterRecipes(recipeId);
+      recipes = this.getRecipe(recipeId);
+    } else { //list page, apply any filters
+      recipes = this.filterRecipes();
     }
+
+    content = this.renderRecipeContent(recipes);
+
+    return content;
+  },
+  renderRecipeContent: function(recipes) {
+    var content;
 
     if(recipes && recipes.length > 0) {
       //single result, render a detail
@@ -41479,7 +41515,7 @@ var RecipeList = React.createClass({displayName: "RecipeList",
 module.exports = RecipeList;
 
 
-},{"../actions/recipeActions":292,"../stores/recipeStore":301,"./recipeDetail.jsx":296,"./recipeListItem.jsx":299,"lodash":2,"react":270,"react-bootstrap":53,"reflux":271}],299:[function(require,module,exports){
+},{"../actions/recipeActions":292,"../stores/recipeStore":301,"./recipeDetail.jsx":296,"./recipeListItem.jsx":299,"lodash":2,"react":270,"react-bootstrap":53,"react-router":96,"reflux":271}],299:[function(require,module,exports){
 'use strict';
 
 var React   = require('react');
@@ -41596,7 +41632,8 @@ var RecipeStore = Reflux.createStore({
         description: "Pale ale is a beer made by warm fermentation using predominantly pale malt."
       },
       rating: 4,
-      brewed: false
+      brewed: false,
+      favorite: true
     },
     {
       id: 2,
@@ -41610,7 +41647,8 @@ var RecipeStore = Reflux.createStore({
           "in the 18th century, and is thought to come from its popularity with street and river porters."
       },
       rating: 3,
-      brewed: true
+      brewed: true,
+      favorite: true
     },
     {
       id: 3,
@@ -41623,7 +41661,8 @@ var RecipeStore = Reflux.createStore({
         " Pale lager is the most widely consumed and commercially available style of beer in the world"
       },
       rating: 1,
-      brewed: false
+      brewed: false,
+      favorite: false
     }]
   }
 });
