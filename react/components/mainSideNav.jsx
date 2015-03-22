@@ -25,7 +25,7 @@ var MainSideNav = React.createClass({
     if (categories && categories.length > 0) {
       navItems = _.map(categories, function(category) {
         return (
-          <NavItem eventKey={category.id} href={this.setActiveCategory}>{category.name}</NavItem>
+          <NavItem eventKey={category.id} onClick={this.setActiveCategory}>{category.name}</NavItem>
         );
       }.bind(this));
     }
@@ -42,9 +42,9 @@ var MainSideNav = React.createClass({
     return (
       <div className="side-nav col-md-2 col-lg-2 col-sm-2">
         <Nav bsStyle="pills" stacked activeKey={1} onSelect={this.handleNavChanged}>
-          <NavItem eventKey={1} href="/recipes">Recipes</NavItem>
-          <NavItem eventKey={2} href="/favorites">Favorites</NavItem>
-          <NavItem eventKey={3} href="/to-brew">To-Brew</NavItem>
+          <NavItem eventKey={1}>Recipes</NavItem>
+          <NavItem eventKey={2}>Favorites</NavItem>
+          <NavItem eventKey={3}>To-Brew</NavItem>
           <NavItem eventKey={3} disabled={true}>Categories</NavItem>
           <Nav className={categoryClasses} bsStyle="pills" stacked activeKey={2}>
             {categories}

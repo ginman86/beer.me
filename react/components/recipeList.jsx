@@ -5,19 +5,16 @@ var Reflux        = require('reflux');
 var _             = require('lodash');
 var Bs            = require('react-bootstrap');
 var ListGroup     = Bs.ListGroup;
-var ListGroupItem = Bs.ListGroupItem;
 var Glyphicon     = Bs.Glyphicon;
 
 var RecipeActions  = require('../actions/recipeActions');
 var RecipeStore    = require('../stores/recipeStore');
 
 var RecipeDetail   = require('./recipeDetail.jsx');
+var RecipeListItem = require('./recipeListItem.jsx');
 
 var RecipeList = React.createClass({
   mixins: [Reflux.connect(RecipeStore,'recipes')],
-  handleClick: function(arg) {
-    console.log("handling click", arg);
-  },
   filterRecipes: function(filter) {
     var recipes = this.state.recipes,
         filtered;
@@ -45,16 +42,15 @@ var RecipeList = React.createClass({
         var recipe = recipes[0];
 
         content = (
-          <RecipeDetail name={recipe.name} description={recipe.description} category={recipe.category} id={recipe.id}/>
+          <RecipeDetail name={recipe.name} description={recipe.description}
+          category={recipe.category} id={recipe.id}/>
         );
       } else if (recipes.length > 1) {
       //multiple results, render a list.
         content = _.map(recipes, function(recipe) {
           return(
-            <ListGroupItem header={recipe.name} key={recipe.id} addonBefore={<Glyphicon glyph="search" />} onClick={this.handleClick}>
-              {recipe.category.name}
-              <span className="rating">Rating: {recipe.rating}</span>
-            </ListGroupItem>
+            <RecipeListItem header={recipe.name} id={recipe.id}
+            category={recipe.category} rating={recipe.rating}/>
           );
         }.bind(this));
       }

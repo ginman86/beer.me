@@ -41265,7 +41265,7 @@ var MainSideNav = React.createClass({displayName: "MainSideNav",
     if (categories && categories.length > 0) {
       navItems = _.map(categories, function(category) {
         return (
-          React.createElement(NavItem, {eventKey: category.id, href: this.setActiveCategory}, category.name)
+          React.createElement(NavItem, {eventKey: category.id, onClick: this.setActiveCategory}, category.name)
         );
       }.bind(this));
     }
@@ -41282,9 +41282,9 @@ var MainSideNav = React.createClass({displayName: "MainSideNav",
     return (
       React.createElement("div", {className: "side-nav col-md-2 col-lg-2 col-sm-2"}, 
         React.createElement(Nav, {bsStyle: "pills", stacked: true, activeKey: 1, onSelect: this.handleNavChanged}, 
-          React.createElement(NavItem, {eventKey: 1, href: "/recipes"}, "Recipes"), 
-          React.createElement(NavItem, {eventKey: 2, href: "/favorites"}, "Favorites"), 
-          React.createElement(NavItem, {eventKey: 3, href: "/to-brew"}, "To-Brew"), 
+          React.createElement(NavItem, {eventKey: 1}, "Recipes"), 
+          React.createElement(NavItem, {eventKey: 2}, "Favorites"), 
+          React.createElement(NavItem, {eventKey: 3}, "To-Brew"), 
           React.createElement(NavItem, {eventKey: 3, disabled: true}, "Categories"), 
           React.createElement(Nav, {className: categoryClasses, bsStyle: "pills", stacked: true, activeKey: 2}, 
             categories
@@ -41301,7 +41301,7 @@ module.exports = MainSideNav;
 
 
 
-},{"../actions/categoryActions":291,"../stores/categoryStore":299,"lodash":2,"react-bootstrap":53,"react/addons":109,"reflux":271}],295:[function(require,module,exports){
+},{"../actions/categoryActions":291,"../stores/categoryStore":300,"lodash":2,"react-bootstrap":53,"react/addons":109,"reflux":271}],295:[function(require,module,exports){
 'use strict';
 
 var React       = require('react');
@@ -41407,19 +41407,16 @@ var Reflux        = require('reflux');
 var _             = require('lodash');
 var Bs            = require('react-bootstrap');
 var ListGroup     = Bs.ListGroup;
-var ListGroupItem = Bs.ListGroupItem;
 var Glyphicon     = Bs.Glyphicon;
 
 var RecipeActions  = require('../actions/recipeActions');
 var RecipeStore    = require('../stores/recipeStore');
 
 var RecipeDetail   = require('./recipeDetail.jsx');
+var RecipeListItem = require('./recipeListItem.jsx');
 
 var RecipeList = React.createClass({displayName: "RecipeList",
   mixins: [Reflux.connect(RecipeStore,'recipes')],
-  handleClick: function(arg) {
-    console.log("handling click", arg);
-  },
   filterRecipes: function(filter) {
     var recipes = this.state.recipes,
         filtered;
@@ -41447,16 +41444,15 @@ var RecipeList = React.createClass({displayName: "RecipeList",
         var recipe = recipes[0];
 
         content = (
-          React.createElement(RecipeDetail, {name: recipe.name, description: recipe.description, category: recipe.category, id: recipe.id})
+          React.createElement(RecipeDetail, {name: recipe.name, description: recipe.description, 
+          category: recipe.category, id: recipe.id})
         );
       } else if (recipes.length > 1) {
       //multiple results, render a list.
         content = _.map(recipes, function(recipe) {
           return(
-            React.createElement(ListGroupItem, {header: recipe.name, key: recipe.id, addonBefore: React.createElement(Glyphicon, {glyph: "search"}), onClick: this.handleClick}, 
-              recipe.category.name, 
-              React.createElement("span", {className: "rating"}, "Rating: ", recipe.rating)
-            )
+            React.createElement(RecipeListItem, {header: recipe.name, id: recipe.id, 
+            category: recipe.category, rating: recipe.rating})
           );
         }.bind(this));
       }
@@ -41483,7 +41479,37 @@ var RecipeList = React.createClass({displayName: "RecipeList",
 module.exports = RecipeList;
 
 
-},{"../actions/recipeActions":292,"../stores/recipeStore":300,"./recipeDetail.jsx":296,"lodash":2,"react":270,"react-bootstrap":53,"reflux":271}],299:[function(require,module,exports){
+},{"../actions/recipeActions":292,"../stores/recipeStore":301,"./recipeDetail.jsx":296,"./recipeListItem.jsx":299,"lodash":2,"react":270,"react-bootstrap":53,"reflux":271}],299:[function(require,module,exports){
+'use strict';
+
+var React   = require('react');
+var Bs      = require('react-bootstrap');
+var Router  = require('react-router');
+
+var ListGroupItem = Bs.ListGroupItem;
+var Navigation    = Router.Navigation;
+
+var RecipeListItem = React.createClass({displayName: "RecipeListItem",
+  mixins: [Navigation],
+  handleClick: function(arg) {
+    this.transitionTo('detail', {recipeId: this.props.id});
+  },
+  render: function() {
+    return (
+      React.createElement(ListGroupItem, React.__spread({},  this.props, {onClick: this.handleClick}), 
+        this.props.category.name, 
+        React.createElement("span", {className: "rating"}, "Rating: ", this.props.rating)
+      )
+    );
+  }
+});
+
+module.exports = RecipeListItem;
+
+
+
+
+},{"react":270,"react-bootstrap":53,"react-router":96}],300:[function(require,module,exports){
 'use strict';
 
 var Reflux          = require('reflux');
@@ -41534,7 +41560,7 @@ var CategoryStore = Reflux.createStore({
 
 module.exports = CategoryStore;
 
-},{"../actions/categoryActions":291,"lodash":2,"reflux":271}],300:[function(require,module,exports){
+},{"../actions/categoryActions":291,"lodash":2,"reflux":271}],301:[function(require,module,exports){
 'use strict';
 
 var Reflux        = require('reflux');
