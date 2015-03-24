@@ -22,10 +22,29 @@ var IngredientStore = Reflux.createStore({
     this.trigger(this._ingredients);
   },
   init: function() {
-    this._ingredients = this.getIngredients();
-    this.updateIngredients(this._ingredients);
+    this.getIngredients(function(ingredients) {
+      this.updateIngredients(ingredients);
+    }.bind(this));
   },
-  getIngredients: function() {
+  getIngredients: function(callback) {
+    storage.getItem('ingredients', function(err, value) {
+      if (!err && value !== null) {
+        this._ingredients = value;
+
+        callback(value);
+      } else {
+        storage.setItem('ingredients', this.getIngredientsSeed(), function(err, value) {
+          if (!err) {
+            console.log("Ingredients successfully seeded.");
+            this._ingredients = value;
+          } else {
+            console.error("Error seeding ingredients");
+          }
+        })
+      }
+    }.bind(this));
+  },
+  getIngredientsSeed: function() {
     //database or localstorage
     return [
     {
@@ -93,4 +112,4 @@ var IngredientStore = Reflux.createStore({
 
 
 
-module.exports = RecipeStore;
+module.exports = IngredientStore;

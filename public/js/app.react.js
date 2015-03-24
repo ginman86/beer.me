@@ -43568,13 +43568,51 @@ module.exports = MainTopNav;
 'use strict';
 
 var React               = require('react');
+var Reflux              = require('reflux');
+var State               = require('react-router').State;
+var Bs                  = require('react-bootstrap');
+var _                   = require('lodash');
+
+var CategoryStore       = require('../stores/categoryStore');
 var RecipeDetailFooter  = require('./recipeDetailFooter.jsx');
+var Input               = Bs.Input;
 
 var RecipeDetail = React.createClass({displayName: "RecipeDetail",
-  handleClick: function(arg) {
+  mixins: [Reflux.connect(CategoryStore, 'categories'),State],
+  getInitialState: function() {
+    var edit = this.getQuery().edit;
 
+    return {
+      edit: edit
+    }
   },
-  render: function() {
+  componentWillReceiveProps: function() {
+    var edit = this.getQuery().edit;
+
+    this.setState({edit: edit});
+
+    return true;
+  },
+  renderCategories: function() {
+    var categories = _.map(this.state.categories, function(category) {
+      return(
+        React.createElement("option", {value: category.id}, category.name)
+      );
+    });
+
+    return categories;
+  },
+  renderEdit: function() {
+    return (
+      React.createElement("form", null, 
+        React.createElement(Input, {type: "text", label: "Name", defaultValue: this.props.name}), 
+        React.createElement(Input, {type: "textarea", label: "Description", defaultValue: this.props.description}), 
+        React.createElement(Input, {type: "select", label: "Category", defaultValue: this.props.category.id}, 
+          this.renderCategories()
+        )
+      ));
+  },
+  renderReadOnly: function() {
     return (
       React.createElement("div", null, 
         React.createElement("h1", null, this.props.name), 
@@ -43583,16 +43621,32 @@ var RecipeDetail = React.createClass({displayName: "RecipeDetail",
         ), 
         React.createElement("div", null, 
           React.createElement("span", null, "Description: ", this.props.description)
-        ), 
-        React.createElement(RecipeDetailFooter, {id: this.props.id})
-      ));
+        )
+      )
+    );
+  },
+  render: function() {
+    var detail;
+
+    if (this.state.edit) {
+      detail = this.renderEdit();
+    } else {
+      detail = this.renderReadOnly();
+    }
+
+    return (
+      React.createElement("div", null, 
+        detail, 
+        React.createElement(RecipeDetailFooter, {id: this.props.id, edit: this.state.edit})
+      )
+    );
   }
 });
 
 module.exports = RecipeDetail;
 
 
-},{"./recipeDetailFooter.jsx":305,"react":278}],305:[function(require,module,exports){
+},{"../stores/categoryStore":308,"./recipeDetailFooter.jsx":305,"lodash":10,"react":278,"react-bootstrap":61,"react-router":104,"reflux":279}],305:[function(require,module,exports){
 'use strict';
 
 var React         = require('react');
@@ -43609,13 +43663,22 @@ var RecipeDetailFooter = React.createClass({displayName: "RecipeDetailFooter",
     return;
   },
   render: function() {
+    var cx = React.addons.classSet,
+        saveClass = cx({
+          'hide': !this.props.edit
+        }),
+        editClass = cx({
+          'hide': this.props.edit
+        });
+
     return (
       React.createElement(ButtonToolbar, null, 
         React.createElement(Button, {bsStyle: "link", onClick: this.back}, "Back"), 
-        React.createElement(ButtonLink, {bsStyle: "link", to: "detail", 
-        params: {recipeId: this.props.id}, query: {edit: true}}, "Edit")
+        React.createElement(ButtonLink, {className: editClass, bsStyle: "link", to: "detail", 
+        params: {recipeId: this.props.id}, query: {edit: true}}, "Edit"), 
+        React.createElement(Button, {className: saveClass, bsStyle: "link", onClick: this.props.save}, "Save")
       )
-      );
+    );
   }
 });
 
@@ -43773,11 +43836,12 @@ module.exports = RecipeListItem;
 'use strict';
 
 var Reflux          = require('reflux');
-var categoryActions = require('../actions/categoryActions');
+var CategoryActions = require('../actions/categoryActions');
+var Storage         = require('./localStore');
 var _               = require('lodash');
 
 var CategoryStore = Reflux.createStore({
-  listenables: [categoryActions],
+  listenables: [CategoryActions],
   getInitialState: function() {
     return this._categories;
   },
@@ -43789,11 +43853,30 @@ var CategoryStore = Reflux.createStore({
     this.trigger(this._categories);
   },
   init: function() {
-    this._categories = this.getCategories();
-    this.updateCategories(this._categories);
+    this.getCategories(function(categories) {
+      this.updateCategories(categories);
+    }.bind(this));
   },
-  getCategories: function() {
-    //database or localstorage
+  getCategories: function(callback) {
+    //currently not mutable due to aggregation concerns and limitations locally.
+    Storage.getItem('categories', function(err, value) {
+      if (!err && value !== null) {
+        this._categories = value;
+
+        callback(value);
+      } else {
+        Storage.setItem('categories', this.getCategoriesSeed(), function(err, value) {
+          if (!err) {
+            console.log("Categories successfully seeded.");
+            this._categories = value;
+          } else {
+            console.error("Error seeding categories");
+          }
+        })
+      }
+    }.bind(this));
+  },
+  getCategoriesSeed: function() {
     return [
     {
       id: 1,
@@ -43820,7 +43903,7 @@ var CategoryStore = Reflux.createStore({
 
 module.exports = CategoryStore;
 
-},{"../actions/categoryActions":299,"lodash":10,"reflux":279}],309:[function(require,module,exports){
+},{"../actions/categoryActions":299,"./localStore":309,"lodash":10,"reflux":279}],309:[function(require,module,exports){
 var localforage = require('localforage');
 
 localforage.config({
@@ -43831,19 +43914,17 @@ localforage.config({
     description : 'local storage for the beer me app.'
 });
 
-console.log("configured localforage");
-
 module.exports = localforage;
 },{"localforage":8}],310:[function(require,module,exports){
 'use strict';
 
 var Reflux        = require('reflux');
-var recipeActions = require('../actions/recipeActions');
-var storage       = require('./localStore');
+var RecipeActions = require('../actions/recipeActions');
+var Storage       = require('./localStore');
 var _             = require('lodash');
 
 var RecipeStore = Reflux.createStore({
-  listenables: [recipeActions],
+  listenables: [RecipeActions],
   getInitialState: function() {
     return this._recipes;
   },
@@ -43860,14 +43941,13 @@ var RecipeStore = Reflux.createStore({
     }.bind(this));
   },
   getRecipes: function(callback) {
-    storage.getItem('recipes', function(err, value) {
+    Storage.getItem('recipes', function(err, value) {
       if (!err && value !== null) {
         this._recipes = value;
 
         callback(value);
       } else {
-        console.log("setting items", this.getRecipeSeed());
-        storage.setItem('recipes', this.getRecipeSeed(), function(err, value) {
+        Storage.setItem('recipes', this.getRecipeSeed(), function(err, value) {
           if (!err) {
             console.log("Recipes successfully seeded.");
             this._recipes = value;

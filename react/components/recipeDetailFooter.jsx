@@ -14,13 +14,22 @@ var RecipeDetailFooter = React.createClass({
     return;
   },
   render: function() {
+    var cx = React.addons.classSet,
+        saveClass = cx({
+          'hide': !this.props.edit
+        }),
+        editClass = cx({
+          'hide': this.props.edit
+        });
+
     return (
       <ButtonToolbar>
         <Button bsStyle="link" onClick={this.back}>Back</Button>
-        <ButtonLink bsStyle="link" to="detail"
+        <ButtonLink className={editClass} bsStyle="link" to="detail"
         params={{recipeId: this.props.id}} query={{edit: true}}>Edit</ButtonLink>
+        <Button className={saveClass} bsStyle="link" onClick={this.props.save}>Save</Button>
       </ButtonToolbar>
-      );
+    );
   }
 });
 

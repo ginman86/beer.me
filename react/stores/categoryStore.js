@@ -1,11 +1,12 @@
 'use strict';
 
 var Reflux          = require('reflux');
-var categoryActions = require('../actions/categoryActions');
+var CategoryActions = require('../actions/categoryActions');
+var Storage         = require('./localStore');
 var _               = require('lodash');
 
 var CategoryStore = Reflux.createStore({
-  listenables: [categoryActions],
+  listenables: [CategoryActions],
   getInitialState: function() {
     return this._categories;
   },
@@ -17,11 +18,30 @@ var CategoryStore = Reflux.createStore({
     this.trigger(this._categories);
   },
   init: function() {
-    this._categories = this.getCategories();
-    this.updateCategories(this._categories);
+    this.getCategories(function(categories) {
+      this.updateCategories(categories);
+    }.bind(this));
   },
-  getCategories: function() {
-    //database or localstorage
+  getCategories: function(callback) {
+    //currently not mutable due to aggregation concerns and limitations locally.
+    Storage.getItem('categories', function(err, value) {
+      if (!err && value !== null) {
+        this._categories = value;
+
+        callback(value);
+      } else {
+        Storage.setItem('categories', this.getCategoriesSeed(), function(err, value) {
+          if (!err) {
+            console.log("Categories successfully seeded.");
+            this._categories = value;
+          } else {
+            console.error("Error seeding categories");
+          }
+        })
+      }
+    }.bind(this));
+  },
+  getCategoriesSeed: function() {
     return [
     {
       id: 1,

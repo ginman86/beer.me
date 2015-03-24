@@ -1,12 +1,12 @@
 'use strict';
 
 var Reflux        = require('reflux');
-var recipeActions = require('../actions/recipeActions');
-var storage       = require('./localStore');
+var RecipeActions = require('../actions/recipeActions');
+var Storage       = require('./localStore');
 var _             = require('lodash');
 
 var RecipeStore = Reflux.createStore({
-  listenables: [recipeActions],
+  listenables: [RecipeActions],
   getInitialState: function() {
     return this._recipes;
   },
@@ -23,14 +23,13 @@ var RecipeStore = Reflux.createStore({
     }.bind(this));
   },
   getRecipes: function(callback) {
-    storage.getItem('recipes', function(err, value) {
+    Storage.getItem('recipes', function(err, value) {
       if (!err && value !== null) {
         this._recipes = value;
 
         callback(value);
       } else {
-        console.log("setting items", this.getRecipeSeed());
-        storage.setItem('recipes', this.getRecipeSeed(), function(err, value) {
+        Storage.setItem('recipes', this.getRecipeSeed(), function(err, value) {
           if (!err) {
             console.log("Recipes successfully seeded.");
             this._recipes = value;

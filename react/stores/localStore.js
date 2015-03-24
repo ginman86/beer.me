@@ -8,6 +8,4 @@ localforage.config({
     description : 'local storage for the beer me app.'
 });
 
-console.log("configured localforage");
-
 module.exports = localforage;
