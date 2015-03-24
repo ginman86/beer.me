@@ -10,6 +10,7 @@
   "license": "MIT",
   "dependencies": {
     "browserify": "^9.0.3",
+    "localforage": "^1.2.2",
     "lodash": "^3.5.0",
     "react": "^0.12.x",
     "react-bootstrap": "^0.17.0",

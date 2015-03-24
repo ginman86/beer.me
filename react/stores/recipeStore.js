@@ -2,6 +2,7 @@
 
 var Reflux        = require('reflux');
 var recipeActions = require('../actions/recipeActions');
+var storage       = require('./localStore');
 var _             = require('lodash');
 
 var RecipeStore = Reflux.createStore({
@@ -17,11 +18,30 @@ var RecipeStore = Reflux.createStore({
     this.trigger(this._recipes);
   },
   init: function() {
-    this._recipes = this.getRecipes();
-    this.updateRecipes(this._recipes);
+    this.getRecipes(function(recipes) {
+      this.updateRecipes(recipes);
+    }.bind(this));
   },
-  getRecipes: function() {
-    //database or localstorage
+  getRecipes: function(callback) {
+    storage.getItem('recipes', function(err, value) {
+      if (!err && value !== null) {
+        this._recipes = value;
+
+        callback(value);
+      } else {
+        console.log("setting items", this.getRecipeSeed());
+        storage.setItem('recipes', this.getRecipeSeed(), function(err, value) {
+          if (!err) {
+            console.log("Recipes successfully seeded.");
+            this._recipes = value;
+          } else {
+            console.error("Error seeding recipes");
+          }
+        })
+      }
+    }.bind(this));
+  },
+  getRecipeSeed: function() {
     return [
     {
       id: 1,
@@ -64,10 +84,8 @@ var RecipeStore = Reflux.createStore({
       rating: 1,
       brewed: false,
       favorite: false
-    }]
+    }];
   }
 });
-
-
 
 module.exports = RecipeStore;
