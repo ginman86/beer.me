@@ -11,7 +11,7 @@ var RecipeStore = Reflux.createStore({
   getInitialState: function() {
     return this._recipes;
   },
-  onSaveRecipe: function(updatedRecipe) {
+  onSaveRecipe: function(updatedRecipe, callback) {
     var originalIndex = null;
 
     //remove if found, then push new.
@@ -30,10 +30,27 @@ var RecipeStore = Reflux.createStore({
 
     Storage.setItem('recipes', this._recipes, function(err,value) {
       console.log("Saved recipes. Error? ", err);
+      if (callback) callback();
     })
   },
   onUpdateRecipes: function(recipes) {
     this.updateRecipes(recipes);
+  },
+  onAddRecipe: function(callback) {
+    var id = this.getNewId();
+
+    this.onSaveRecipe({
+      id: id,
+      name: "",
+      description: "",
+      categoryId: null,
+      category: {},
+      rating: null,
+      brewed: false,
+      favorite: false
+    });
+
+    callback(id);
   },
   updateRecipes: function(recipes) {
     this._recipes = recipes;
@@ -67,6 +84,9 @@ var RecipeStore = Reflux.createStore({
     }.bind(this));
 
     return hydrated;
+  },
+  getNewId: function() {
+    return _.max(this._recipes, 'id').id + 1;
   },
   getRecipes: function(callback) {
     Storage.getItem('recipes', function(err, value) {

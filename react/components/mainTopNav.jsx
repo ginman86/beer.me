@@ -1,12 +1,15 @@
 'use strict';
 
-var React       = require('react');
-var Reflux      = require('reflux');
-var Bs          = require('react-bootstrap');
-var Navbar      = Bs.Navbar;
-var NavItem     = Bs.NavItem;
-var Nav         = Bs.Nav;
-var Input       = Bs.Input;
+var React           = require('react');
+var Reflux          = require('reflux');
+var Router          = require("react-router");
+var Bs              = require('react-bootstrap');
+var RecipeActions   = require('../actions/recipeActions');
+
+var Navbar          = Bs.Navbar;
+var NavItem         = Bs.NavItem;
+var Nav             = Bs.Nav;
+var Input           = Bs.Input;
 var CollapsableNav  = Bs.CollapsableNav;
 var Button          = Bs.Button;
 var Glyphicon       = Bs.Glyphicon;
@@ -14,7 +17,15 @@ var Grid            = Bs.Grid;
 var Col             = Bs.Col;
 var Row             = Bs.Row;
 
+var Navigation      = Router.Navigation;
+
 var MainTopNav = React.createClass({
+  mixins: [Navigation],
+  addNew: function() {
+    RecipeActions.addRecipe(function(id) {
+      this.transitionTo('detail', {recipeId: id}, {edit: true});
+    }.bind(this));
+  },
   render: function() {
     return (
       <div>
@@ -27,7 +38,7 @@ var MainTopNav = React.createClass({
             <Col sm={4} md={4} lg={4}>
               <span className="user-name">Greg</span>
               <Glyphicon glyph="bell" className="bell"/>
-              <span bsSize="small" className="add-new"><Glyphicon glyph="plus" /> Add new</span>
+              <Button bsSize="small" bsStyle="link" className="add-new" onClick={this.addNew}><Glyphicon glyph="plus" /> Add new</Button>
             </Col>
           </Row>
       </Grid>

@@ -2,6 +2,7 @@
 
 var React               = require('react');
 var Reflux              = require('reflux');
+var Router              = require('react-router');
 var State               = require('react-router').State;
 var Bs                  = require('react-bootstrap');
 var _                   = require('lodash');
@@ -10,9 +11,10 @@ var CategoryStore       = require('../stores/categoryStore');
 var RecipeActions       = require('../actions/recipeActions');
 var RecipeDetailFooter  = require('./recipeDetailFooter.jsx');
 var Input               = Bs.Input;
+var Navigation          = Router.Navigation;
 
 var RecipeDetail = React.createClass({
-  mixins: [Reflux.connect(CategoryStore, 'categories'),State],
+  mixins: [Reflux.connect(CategoryStore, 'categories'),State,Navigation],
   getInitialState: function() {
     var edit = this.getQuery().edit;
 
@@ -40,7 +42,9 @@ var RecipeDetail = React.createClass({
         return category.id == this.refs.category.getValue();
       }.bind(this)) });
 
-    RecipeActions.saveRecipe(recipe);
+    RecipeActions.saveRecipe(recipe, function() {
+      this.transitionTo("/");
+    }.bind(this));
   },
   renderCategories: function() {
     var categories = _.map(this.state.categories, function(category) {

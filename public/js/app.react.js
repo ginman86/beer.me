@@ -43527,13 +43527,16 @@ module.exports = MainSideNav;
 },{"../actions/categoryActions":299,"../stores/categoryStore":308,"lodash":10,"react-bootstrap":61,"react-router-bootstrap":76,"react/addons":117,"reflux":279}],303:[function(require,module,exports){
 'use strict';
 
-var React       = require('react');
-var Reflux      = require('reflux');
-var Bs          = require('react-bootstrap');
-var Navbar      = Bs.Navbar;
-var NavItem     = Bs.NavItem;
-var Nav         = Bs.Nav;
-var Input       = Bs.Input;
+var React           = require('react');
+var Reflux          = require('reflux');
+var Router          = require("react-router");
+var Bs              = require('react-bootstrap');
+var RecipeActions   = require('../actions/recipeActions');
+
+var Navbar          = Bs.Navbar;
+var NavItem         = Bs.NavItem;
+var Nav             = Bs.Nav;
+var Input           = Bs.Input;
 var CollapsableNav  = Bs.CollapsableNav;
 var Button          = Bs.Button;
 var Glyphicon       = Bs.Glyphicon;
@@ -43541,7 +43544,15 @@ var Grid            = Bs.Grid;
 var Col             = Bs.Col;
 var Row             = Bs.Row;
 
+var Navigation      = Router.Navigation;
+
 var MainTopNav = React.createClass({displayName: "MainTopNav",
+  mixins: [Navigation],
+  addNew: function() {
+    RecipeActions.addRecipe(function(id) {
+      this.transitionTo('detail', {recipeId: id}, {edit: true});
+    }.bind(this));
+  },
   render: function() {
     return (
       React.createElement("div", null, 
@@ -43554,7 +43565,7 @@ var MainTopNav = React.createClass({displayName: "MainTopNav",
             React.createElement(Col, {sm: 4, md: 4, lg: 4}, 
               React.createElement("span", {className: "user-name"}, "Greg"), 
               React.createElement(Glyphicon, {glyph: "bell", className: "bell"}), 
-              React.createElement("span", {bsSize: "small", className: "add-new"}, React.createElement(Glyphicon, {glyph: "plus"}), " Add new")
+              React.createElement(Button, {bsSize: "small", bsStyle: "link", className: "add-new", onClick: this.addNew}, React.createElement(Glyphicon, {glyph: "plus"}), " Add new")
             )
           )
       ), 
@@ -43564,11 +43575,12 @@ var MainTopNav = React.createClass({displayName: "MainTopNav",
 });
 
 module.exports = MainTopNav;
-},{"react":278,"react-bootstrap":61,"reflux":279}],304:[function(require,module,exports){
+},{"../actions/recipeActions":300,"react":278,"react-bootstrap":61,"react-router":104,"reflux":279}],304:[function(require,module,exports){
 'use strict';
 
 var React               = require('react');
 var Reflux              = require('reflux');
+var Router              = require('react-router');
 var State               = require('react-router').State;
 var Bs                  = require('react-bootstrap');
 var _                   = require('lodash');
@@ -43577,9 +43589,10 @@ var CategoryStore       = require('../stores/categoryStore');
 var RecipeActions       = require('../actions/recipeActions');
 var RecipeDetailFooter  = require('./recipeDetailFooter.jsx');
 var Input               = Bs.Input;
+var Navigation          = Router.Navigation;
 
 var RecipeDetail = React.createClass({displayName: "RecipeDetail",
-  mixins: [Reflux.connect(CategoryStore, 'categories'),State],
+  mixins: [Reflux.connect(CategoryStore, 'categories'),State,Navigation],
   getInitialState: function() {
     var edit = this.getQuery().edit;
 
@@ -43607,7 +43620,9 @@ var RecipeDetail = React.createClass({displayName: "RecipeDetail",
         return category.id == this.refs.category.getValue();
       }.bind(this)) });
 
-    RecipeActions.saveRecipe(recipe);
+    RecipeActions.saveRecipe(recipe, function() {
+      this.transitionTo("/");
+    }.bind(this));
   },
   renderCategories: function() {
     var categories = _.map(this.state.categories, function(category) {
@@ -43946,7 +43961,7 @@ var RecipeStore = Reflux.createStore({
   getInitialState: function() {
     return this._recipes;
   },
-  onSaveRecipe: function(updatedRecipe) {
+  onSaveRecipe: function(updatedRecipe, callback) {
     var originalIndex = null;
 
     //remove if found, then push new.
@@ -43965,10 +43980,27 @@ var RecipeStore = Reflux.createStore({
 
     Storage.setItem('recipes', this._recipes, function(err,value) {
       console.log("Saved recipes. Error? ", err);
+      if (callback) callback();
     })
   },
   onUpdateRecipes: function(recipes) {
     this.updateRecipes(recipes);
+  },
+  onAddRecipe: function(callback) {
+    var id = this.getNewId();
+
+    this.onSaveRecipe({
+      id: id,
+      name: "",
+      description: "",
+      categoryId: null,
+      category: {},
+      rating: null,
+      brewed: false,
+      favorite: false
+    });
+
+    callback(id);
   },
   updateRecipes: function(recipes) {
     this._recipes = recipes;
@@ -44002,6 +44034,9 @@ var RecipeStore = Reflux.createStore({
     }.bind(this));
 
     return hydrated;
+  },
+  getNewId: function() {
+    return _.max(this._recipes, 'id').id + 1;
   },
   getRecipes: function(callback) {
     Storage.getItem('recipes', function(err, value) {
