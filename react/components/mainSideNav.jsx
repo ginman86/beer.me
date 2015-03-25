@@ -14,8 +14,9 @@ var NavItemLink     = RouterBs.NavItemLink;
 
 var MainSideNav = React.createClass({
   mixins: [Reflux.connect(categoryStore, 'categories')],
-  setActiveCategory: function() {
+  setActiveCategory: function(a, b, c) {
     //todo
+    console.log("Set Active Category", a, b,c);
   },
   renderCategories: function() {
     var navItems,
@@ -24,7 +25,7 @@ var MainSideNav = React.createClass({
     if (categories && categories.length > 0) {
       navItems = _.map(categories, function(category) {
         return (
-          <NavItem eventKey={category.id} onClick={this.setActiveCategory}>{category.name}</NavItem>
+          <NavItemLink eventKey={category.id} to="recipes" query={{categoryId: category.id}}>{category.name}</NavItemLink>
         );
       }.bind(this));
     }
@@ -45,7 +46,7 @@ var MainSideNav = React.createClass({
           <NavItemLink eventKey={2} to="recipes" query={{favorite: true}}>Favorites</NavItemLink>
           <NavItemLink eventKey={3} to="recipes" query={{brewed: false}}>To-Brew</NavItemLink>
           <NavItem eventKey={4} disabled={true}>Categories</NavItem>
-          <Nav className={categoryClasses} bsStyle="pills" stacked activeKey={2}>
+          <Nav className={categoryClasses} bsStyle="pills" stacked activeKey={1}>
             {categories}
           </Nav>
         </Nav>

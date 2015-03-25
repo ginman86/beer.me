@@ -19,6 +19,7 @@ var RecipeListItem = require('./recipeListItem.jsx');
 var RecipeList = React.createClass({
   mixins: [Reflux.connect(RecipeStore,'recipes'), State],
   filterRecipes: function() {
+    console.log("Filtering recipes");
     var recipes = this.state.recipes,
         filters = this.getQuery(),
         filtered = recipes;
@@ -28,19 +29,29 @@ var RecipeList = React.createClass({
         var show = false;
 
         for(var filter in filters) {
-          if (recipe[filter] !== undefined &&
-            recipe[filter] == !!filters[filter]) { //booleanify
-
+          if (this.matchesFilter(recipe, filter, filters)) {
             show = true;
             break;
           }
         }
 
         return show;
-      });
+      }.bind(this));
     }
 
     return filtered;
+  },
+  matchesFilter: function(object, filter, filters) {
+    if (object[filter] !== undefined) //has the property we are filtering on
+    {
+      if (filters[filter] == "true" || filters[filter] == "false") {
+        return object[filter] == !!filters[filter];
+      } else {
+        return object[filter] == filters[filter];
+      }
+    }
+
+    return false;
   },
   getRecipe: function(id) {
     var recipes = this.state.recipes,

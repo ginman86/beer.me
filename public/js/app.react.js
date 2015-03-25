@@ -43478,8 +43478,9 @@ var NavItemLink     = RouterBs.NavItemLink;
 
 var MainSideNav = React.createClass({displayName: "MainSideNav",
   mixins: [Reflux.connect(categoryStore, 'categories')],
-  setActiveCategory: function() {
+  setActiveCategory: function(a, b, c) {
     //todo
+    console.log("Set Active Category", a, b,c);
   },
   renderCategories: function() {
     var navItems,
@@ -43488,7 +43489,7 @@ var MainSideNav = React.createClass({displayName: "MainSideNav",
     if (categories && categories.length > 0) {
       navItems = _.map(categories, function(category) {
         return (
-          React.createElement(NavItem, {eventKey: category.id, onClick: this.setActiveCategory}, category.name)
+          React.createElement(NavItemLink, {eventKey: category.id, to: "recipes", query: {categoryId: category.id}}, category.name)
         );
       }.bind(this));
     }
@@ -43509,7 +43510,7 @@ var MainSideNav = React.createClass({displayName: "MainSideNav",
           React.createElement(NavItemLink, {eventKey: 2, to: "recipes", query: {favorite: true}}, "Favorites"), 
           React.createElement(NavItemLink, {eventKey: 3, to: "recipes", query: {brewed: false}}, "To-Brew"), 
           React.createElement(NavItem, {eventKey: 4, disabled: true}, "Categories"), 
-          React.createElement(Nav, {className: categoryClasses, bsStyle: "pills", stacked: true, activeKey: 2}, 
+          React.createElement(Nav, {className: categoryClasses, bsStyle: "pills", stacked: true, activeKey: 1}, 
             categories
           )
         )
@@ -43744,6 +43745,7 @@ var RecipeListItem = require('./recipeListItem.jsx');
 var RecipeList = React.createClass({displayName: "RecipeList",
   mixins: [Reflux.connect(RecipeStore,'recipes'), State],
   filterRecipes: function() {
+    console.log("Filtering recipes");
     var recipes = this.state.recipes,
         filters = this.getQuery(),
         filtered = recipes;
@@ -43753,19 +43755,29 @@ var RecipeList = React.createClass({displayName: "RecipeList",
         var show = false;
 
         for(var filter in filters) {
-          if (recipe[filter] !== undefined &&
-            recipe[filter] == !!filters[filter]) { //booleanify
-
+          if (this.matchesFilter(recipe, filter, filters)) {
             show = true;
             break;
           }
         }
 
         return show;
-      });
+      }.bind(this));
     }
 
     return filtered;
+  },
+  matchesFilter: function(object, filter, filters) {
+    if (object[filter] !== undefined) //has the property we are filtering on
+    {
+      if (filters[filter] == "true" || filters[filter] == "false") {
+        return object[filter] == !!filters[filter];
+      } else {
+        return object[filter] == filters[filter];
+      }
+    }
+
+    return false;
   },
   getRecipe: function(id) {
     var recipes = this.state.recipes,
