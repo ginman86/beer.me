@@ -28,16 +28,21 @@ var MainTopNav = React.createClass({
   },
   render: function() {
     return (
-      <div>
-        <Grid fluid className="top-nav">
+      <div className="top-nav">
+        <Grid fluid>
           <Row className="show-grid">
-            <Col xs={2} sm={2} md={2} lg={2}><h2><img src="img/beer-small.png"/>beer.me</h2></Col>
+            <Col xs={2} sm={2} md={2} lg={2}>
+              <h2>
+                <img className="beer-icon" src="img/beer-small.png"/>
+                <span className="beer-me">beer.me</span>
+              </h2>
+            </Col>
             <Col xs={6} sm={6} md={6} lg={6}>
               <Input type="text" placeholder="Search" addonBefore={<Glyphicon glyph="search" />} />
             </Col>
             <Col sm={4} md={4} lg={4}>
-              <span className="user-name">Greg</span>
-              <Glyphicon glyph="bell" className="bell"/>
+              <Button bsSize="small" bsStyle="link" className="user-name">Greg</Button>
+              <Button bsSize="small" bsStyle="link"><Glyphicon glyph="bell" className="bell"/></Button>
               <Button bsSize="small" bsStyle="link" className="add-new" onClick={this.addNew}><Glyphicon glyph="plus" /> Add new</Button>
             </Col>
           </Row>

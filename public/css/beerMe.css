@@ -11,6 +11,10 @@
   margin-bottom: 0px;
 }
 
+.top-nav h2 .beer-me {
+  margin-left: 5px;
+}
+
 .top-nav .bell {
   float: right;
   padding-top: 2px;
@@ -28,6 +32,14 @@
   float: right;
   padding-left: 10px;
   padding-right: 10px;
+}
+
+.top-nav hr {
+  margin-top: 0px;
+}
+
+.top-nav .beer-icon {
+  vertical-align: top;
 }
 .recipe-list .list-group {
   box-shadow: none;

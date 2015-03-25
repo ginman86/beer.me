@@ -43555,16 +43555,21 @@ var MainTopNav = React.createClass({displayName: "MainTopNav",
   },
   render: function() {
     return (
-      React.createElement("div", null, 
-        React.createElement(Grid, {fluid: true, className: "top-nav"}, 
+      React.createElement("div", {className: "top-nav"}, 
+        React.createElement(Grid, {fluid: true}, 
           React.createElement(Row, {className: "show-grid"}, 
-            React.createElement(Col, {xs: 2, sm: 2, md: 2, lg: 2}, React.createElement("h2", null, React.createElement("img", {src: "img/beer-small.png"}), "beer.me")), 
+            React.createElement(Col, {xs: 2, sm: 2, md: 2, lg: 2}, 
+              React.createElement("h2", null, 
+                React.createElement("img", {className: "beer-icon", src: "img/beer-small.png"}), 
+                React.createElement("span", {className: "beer-me"}, "beer.me")
+              )
+            ), 
             React.createElement(Col, {xs: 6, sm: 6, md: 6, lg: 6}, 
               React.createElement(Input, {type: "text", placeholder: "Search", addonBefore: React.createElement(Glyphicon, {glyph: "search"})})
             ), 
             React.createElement(Col, {sm: 4, md: 4, lg: 4}, 
-              React.createElement("span", {className: "user-name"}, "Greg"), 
-              React.createElement(Glyphicon, {glyph: "bell", className: "bell"}), 
+              React.createElement(Button, {bsSize: "small", bsStyle: "link", className: "user-name"}, "Greg"), 
+              React.createElement(Button, {bsSize: "small", bsStyle: "link"}, React.createElement(Glyphicon, {glyph: "bell", className: "bell"})), 
               React.createElement(Button, {bsSize: "small", bsStyle: "link", className: "add-new", onClick: this.addNew}, React.createElement(Glyphicon, {glyph: "plus"}), " Add new")
             )
           )
