@@ -6,7 +6,7 @@ var _        = require('lodash');
 var RecipeActions = Reflux.createActions([
   'addRecipe',
   'removeRecipe',
-  'editRecipe',
+  'saveRecipe',
   'updateRecipes'
 ]);
 

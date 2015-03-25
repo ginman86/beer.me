@@ -1,14 +1,36 @@
 'use strict';
 
-var Reflux        = require('reflux');
-var RecipeActions = require('../actions/recipeActions');
-var Storage       = require('./localStore');
-var _             = require('lodash');
+var Reflux          = require('reflux');
+var RecipeActions   = require('../actions/recipeActions');
+var CategoryStore   = require('./categoryStore');
+var Storage         = require('./localStore');
+var _               = require('lodash');
 
 var RecipeStore = Reflux.createStore({
   listenables: [RecipeActions],
   getInitialState: function() {
     return this._recipes;
+  },
+  onSaveRecipe: function(updatedRecipe) {
+    var originalIndex = null;
+
+    //remove if found, then push new.
+    _.each(this._recipes, function(recipe, i) {
+      if (recipe.id === updatedRecipe.id) {
+        originalIndex = i;
+        return false;
+      }
+    });
+
+    if (originalIndex !== null) {
+      this._recipes[originalIndex] = updatedRecipe;
+    } else {
+      this._recipes.push(updatedRecipe);
+    }
+
+    Storage.setItem('recipes', this._recipes, function(err,value) {
+      console.log("Saved recipes. Error? ", err);
+    })
   },
   onUpdateRecipes: function(recipes) {
     this.updateRecipes(recipes);
@@ -18,21 +40,43 @@ var RecipeStore = Reflux.createStore({
     this.trigger(this._recipes);
   },
   init: function() {
+    this.listenTo(CategoryStore, this.onCategoriesUpdated, this.onCategoriesUpdated);
+
     this.getRecipes(function(recipes) {
-      this.updateRecipes(recipes);
+      var hydratedRecipes = this.hydrateRecipes(recipes);
+
+      this.updateRecipes(hydratedRecipes);
     }.bind(this));
+  },
+  onCategoriesUpdated: function(categories) {
+    var hydrated;
+
+    this._categories = categories;
+    hydrated = this.hydrateRecipes(this._recipes);
+
+    this.updateRecipes(hydrated);
+  },
+  hydrateRecipes: function(recipes) {
+    var hydrated = [];
+
+    _.each(recipes, function(recipe) {
+      recipe.category = _.find(this._categories, function(category) {
+        return category.id === recipe.categoryId;
+      });
+      hydrated.push(recipe);
+    }.bind(this));
+
+    return hydrated;
   },
   getRecipes: function(callback) {
     Storage.getItem('recipes', function(err, value) {
       if (!err && value !== null) {
-        this._recipes = value;
-
         callback(value);
       } else {
         Storage.setItem('recipes', this.getRecipeSeed(), function(err, value) {
           if (!err) {
             console.log("Recipes successfully seeded.");
-            this._recipes = value;
+            callback(value);
           } else {
             console.error("Error seeding recipes");
           }
@@ -46,11 +90,7 @@ var RecipeStore = Reflux.createStore({
       id: 1,
       name: "Midwestern Pale Ale",
       description: "The pride of the midwest. Bitter citra hops balanced by a malty finish.",
-      category: {
-        id: 1,
-        name: "Pale Ales",
-        description: "Pale ale is a beer made by warm fermentation using predominantly pale malt."
-      },
+      categoryId: 1,
       rating: 4,
       brewed: false,
       favorite: true
@@ -59,13 +99,7 @@ var RecipeStore = Reflux.createStore({
       id: 2,
       name: "Smoky Porter",
       description: "A tasty treat, straight out of the campfire",
-      category: {
-        id: 2,
-        name: "Porters",
-        description: "Porter is a dark style of beer developed in London from " +
-          "well-hopped beers made from brown malt. The name was first recorded " +
-          "in the 18th century, and is thought to come from its popularity with street and river porters."
-      },
+      categoryId: 2,
       rating: 3,
       brewed: true,
       favorite: true
@@ -74,12 +108,7 @@ var RecipeStore = Reflux.createStore({
       id: 3,
       name: "Stag",
       description: "Not for beginners.",
-      category: {
-        id: 3,
-        name: "Lagers",
-        description: "Lager (German: storage) is a type of beer that is fermented and conditioned at low temperatures." +
-        " Pale lager is the most widely consumed and commercially available style of beer in the world"
-      },
+      categoryId: 3,
       rating: 1,
       brewed: false,
       favorite: false

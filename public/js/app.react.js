@@ -43412,7 +43412,7 @@ var _        = require('lodash');
 var RecipeActions = Reflux.createActions([
   'addRecipe',
   'removeRecipe',
-  'editRecipe',
+  'saveRecipe',
   'updateRecipes'
 ]);
 
@@ -43574,6 +43574,7 @@ var Bs                  = require('react-bootstrap');
 var _                   = require('lodash');
 
 var CategoryStore       = require('../stores/categoryStore');
+var RecipeActions       = require('../actions/recipeActions');
 var RecipeDetailFooter  = require('./recipeDetailFooter.jsx');
 var Input               = Bs.Input;
 
@@ -43593,6 +43594,21 @@ var RecipeDetail = React.createClass({displayName: "RecipeDetail",
 
     return true;
   },
+  save: function() {
+    var recipe = this.props.recipe;
+
+    _.extend(recipe, {
+      id: this.props.id,
+      name: this.refs.name.getValue(),
+      description: this.refs.description.getValue(),
+      rating: this.refs.rating.getValue(),
+      categoryId: this.refs.category.getValue() * 1,
+      category: _.find(this.state.categories, function(category) {
+        return category.id == this.refs.category.getValue();
+      }.bind(this)) });
+
+    RecipeActions.saveRecipe(recipe);
+  },
   renderCategories: function() {
     var categories = _.map(this.state.categories, function(category) {
       return(
@@ -43605,22 +43621,23 @@ var RecipeDetail = React.createClass({displayName: "RecipeDetail",
   renderEdit: function() {
     return (
       React.createElement("form", null, 
-        React.createElement(Input, {type: "text", label: "Name", defaultValue: this.props.name}), 
-        React.createElement(Input, {type: "textarea", label: "Description", defaultValue: this.props.description}), 
-        React.createElement(Input, {type: "select", label: "Category", defaultValue: this.props.category.id}, 
+        React.createElement(Input, {ref: "name", type: "text", label: "Name", defaultValue: this.props.recipe.name}), 
+        React.createElement(Input, {ref: "description", type: "textarea", label: "Description", defaultValue: this.props.recipe.description}), 
+        React.createElement(Input, {ref: "category", type: "select", label: "Category", defaultValue: this.props.recipe.category.id}, 
           this.renderCategories()
-        )
+        ), 
+        React.createElement(Input, {ref: "rating", type: "text", label: "Rating", defaultValue: this.props.recipe.rating})
       ));
   },
   renderReadOnly: function() {
     return (
       React.createElement("div", null, 
-        React.createElement("h1", null, this.props.name), 
+        React.createElement("h1", null, this.props.recipe.name), 
         React.createElement("div", null, 
-          React.createElement("span", null, "Category: ", this.props.category.name)
+          React.createElement("span", null, "Category: ", this.props.recipe.category.name)
         ), 
         React.createElement("div", null, 
-          React.createElement("span", null, "Description: ", this.props.description)
+          React.createElement("span", null, "Description: ", this.props.recipe.description)
         )
       )
     );
@@ -43637,7 +43654,7 @@ var RecipeDetail = React.createClass({displayName: "RecipeDetail",
     return (
       React.createElement("div", null, 
         detail, 
-        React.createElement(RecipeDetailFooter, {id: this.props.id, edit: this.state.edit})
+        React.createElement(RecipeDetailFooter, {id: this.props.id, edit: this.state.edit, save: this.save})
       )
     );
   }
@@ -43646,7 +43663,7 @@ var RecipeDetail = React.createClass({displayName: "RecipeDetail",
 module.exports = RecipeDetail;
 
 
-},{"../stores/categoryStore":308,"./recipeDetailFooter.jsx":305,"lodash":10,"react":278,"react-bootstrap":61,"react-router":104,"reflux":279}],305:[function(require,module,exports){
+},{"../actions/recipeActions":300,"../stores/categoryStore":308,"./recipeDetailFooter.jsx":305,"lodash":10,"react":278,"react-bootstrap":61,"react-router":104,"reflux":279}],305:[function(require,module,exports){
 'use strict';
 
 var React         = require('react');
@@ -43767,8 +43784,7 @@ var RecipeList = React.createClass({displayName: "RecipeList",
         var recipe = recipes[0];
 
         content = (
-          React.createElement(RecipeDetail, {name: recipe.name, description: recipe.description, 
-          category: recipe.category, id: recipe.id})
+          React.createElement(RecipeDetail, {recipe: recipe, id: recipe.id})
         );
       } else if (recipes.length > 1) {
       //multiple results, render a list.
@@ -43851,6 +43867,7 @@ var CategoryStore = Reflux.createStore({
   updateCategories: function(categories) {
     this._categories = categories;
     this.trigger(this._categories);
+    console.log("Categories updated");
   },
   init: function() {
     this.getCategories(function(categories) {
@@ -43918,15 +43935,37 @@ module.exports = localforage;
 },{"localforage":8}],310:[function(require,module,exports){
 'use strict';
 
-var Reflux        = require('reflux');
-var RecipeActions = require('../actions/recipeActions');
-var Storage       = require('./localStore');
-var _             = require('lodash');
+var Reflux          = require('reflux');
+var RecipeActions   = require('../actions/recipeActions');
+var CategoryStore   = require('./categoryStore');
+var Storage         = require('./localStore');
+var _               = require('lodash');
 
 var RecipeStore = Reflux.createStore({
   listenables: [RecipeActions],
   getInitialState: function() {
     return this._recipes;
+  },
+  onSaveRecipe: function(updatedRecipe) {
+    var originalIndex = null;
+
+    //remove if found, then push new.
+    _.each(this._recipes, function(recipe, i) {
+      if (recipe.id === updatedRecipe.id) {
+        originalIndex = i;
+        return false;
+      }
+    });
+
+    if (originalIndex !== null) {
+      this._recipes[originalIndex] = updatedRecipe;
+    } else {
+      this._recipes.push(updatedRecipe);
+    }
+
+    Storage.setItem('recipes', this._recipes, function(err,value) {
+      console.log("Saved recipes. Error? ", err);
+    })
   },
   onUpdateRecipes: function(recipes) {
     this.updateRecipes(recipes);
@@ -43936,21 +43975,43 @@ var RecipeStore = Reflux.createStore({
     this.trigger(this._recipes);
   },
   init: function() {
+    this.listenTo(CategoryStore, this.onCategoriesUpdated, this.onCategoriesUpdated);
+
     this.getRecipes(function(recipes) {
-      this.updateRecipes(recipes);
+      var hydratedRecipes = this.hydrateRecipes(recipes);
+
+      this.updateRecipes(hydratedRecipes);
     }.bind(this));
+  },
+  onCategoriesUpdated: function(categories) {
+    var hydrated;
+
+    this._categories = categories;
+    hydrated = this.hydrateRecipes(this._recipes);
+
+    this.updateRecipes(hydrated);
+  },
+  hydrateRecipes: function(recipes) {
+    var hydrated = [];
+
+    _.each(recipes, function(recipe) {
+      recipe.category = _.find(this._categories, function(category) {
+        return category.id === recipe.categoryId;
+      });
+      hydrated.push(recipe);
+    }.bind(this));
+
+    return hydrated;
   },
   getRecipes: function(callback) {
     Storage.getItem('recipes', function(err, value) {
       if (!err && value !== null) {
-        this._recipes = value;
-
         callback(value);
       } else {
         Storage.setItem('recipes', this.getRecipeSeed(), function(err, value) {
           if (!err) {
             console.log("Recipes successfully seeded.");
-            this._recipes = value;
+            callback(value);
           } else {
             console.error("Error seeding recipes");
           }
@@ -43964,11 +44025,7 @@ var RecipeStore = Reflux.createStore({
       id: 1,
       name: "Midwestern Pale Ale",
       description: "The pride of the midwest. Bitter citra hops balanced by a malty finish.",
-      category: {
-        id: 1,
-        name: "Pale Ales",
-        description: "Pale ale is a beer made by warm fermentation using predominantly pale malt."
-      },
+      categoryId: 1,
       rating: 4,
       brewed: false,
       favorite: true
@@ -43977,13 +44034,7 @@ var RecipeStore = Reflux.createStore({
       id: 2,
       name: "Smoky Porter",
       description: "A tasty treat, straight out of the campfire",
-      category: {
-        id: 2,
-        name: "Porters",
-        description: "Porter is a dark style of beer developed in London from " +
-          "well-hopped beers made from brown malt. The name was first recorded " +
-          "in the 18th century, and is thought to come from its popularity with street and river porters."
-      },
+      categoryId: 2,
       rating: 3,
       brewed: true,
       favorite: true
@@ -43992,12 +44043,7 @@ var RecipeStore = Reflux.createStore({
       id: 3,
       name: "Stag",
       description: "Not for beginners.",
-      category: {
-        id: 3,
-        name: "Lagers",
-        description: "Lager (German: storage) is a type of beer that is fermented and conditioned at low temperatures." +
-        " Pale lager is the most widely consumed and commercially available style of beer in the world"
-      },
+      categoryId: 3,
       rating: 1,
       brewed: false,
       favorite: false
@@ -44006,4 +44052,4 @@ var RecipeStore = Reflux.createStore({
 });
 
 module.exports = RecipeStore;
-},{"../actions/recipeActions":300,"./localStore":309,"lodash":10,"reflux":279}]},{},[301]);
+},{"../actions/recipeActions":300,"./categoryStore":308,"./localStore":309,"lodash":10,"reflux":279}]},{},[301]);

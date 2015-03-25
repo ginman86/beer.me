@@ -79,8 +79,7 @@ var RecipeList = React.createClass({
         var recipe = recipes[0];
 
         content = (
-          <RecipeDetail name={recipe.name} description={recipe.description}
-          category={recipe.category} id={recipe.id}/>
+          <RecipeDetail recipe={recipe} id={recipe.id}/>
         );
       } else if (recipes.length > 1) {
       //multiple results, render a list.

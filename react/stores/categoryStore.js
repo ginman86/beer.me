@@ -16,6 +16,7 @@ var CategoryStore = Reflux.createStore({
   updateCategories: function(categories) {
     this._categories = categories;
     this.trigger(this._categories);
+    console.log("Categories updated");
   },
   init: function() {
     this.getCategories(function(categories) {

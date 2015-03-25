@@ -7,6 +7,7 @@ var Bs                  = require('react-bootstrap');
 var _                   = require('lodash');
 
 var CategoryStore       = require('../stores/categoryStore');
+var RecipeActions       = require('../actions/recipeActions');
 var RecipeDetailFooter  = require('./recipeDetailFooter.jsx');
 var Input               = Bs.Input;
 
@@ -26,6 +27,21 @@ var RecipeDetail = React.createClass({
 
     return true;
   },
+  save: function() {
+    var recipe = this.props.recipe;
+
+    _.extend(recipe, {
+      id: this.props.id,
+      name: this.refs.name.getValue(),
+      description: this.refs.description.getValue(),
+      rating: this.refs.rating.getValue(),
+      categoryId: this.refs.category.getValue() * 1,
+      category: _.find(this.state.categories, function(category) {
+        return category.id == this.refs.category.getValue();
+      }.bind(this)) });
+
+    RecipeActions.saveRecipe(recipe);
+  },
   renderCategories: function() {
     var categories = _.map(this.state.categories, function(category) {
       return(
@@ -38,22 +54,23 @@ var RecipeDetail = React.createClass({
   renderEdit: function() {
     return (
       <form>
-        <Input type="text" label='Name' defaultValue={this.props.name} />
-        <Input type="textarea" label='Description' defaultValue={this.props.description} />
-        <Input type="select" label='Category' defaultValue={this.props.category.id}>
+        <Input ref="name" type="text" label='Name' defaultValue={this.props.recipe.name} />
+        <Input ref="description" type="textarea" label='Description' defaultValue={this.props.recipe.description} />
+        <Input ref="category" type="select" label='Category' defaultValue={this.props.recipe.category.id}>
           {this.renderCategories()}
         </Input>
+        <Input ref="rating" type="text" label="Rating" defaultValue={this.props.recipe.rating} />
       </form>);
   },
   renderReadOnly: function() {
     return (
       <div>
-        <h1>{this.props.name}</h1>
+        <h1>{this.props.recipe.name}</h1>
         <div>
-          <span>Category: {this.props.category.name}</span>
+          <span>Category: {this.props.recipe.category.name}</span>
         </div>
         <div>
-          <span>Description: {this.props.description}</span>
+          <span>Description: {this.props.recipe.description}</span>
         </div>
       </div>
     );
@@ -70,7 +87,7 @@ var RecipeDetail = React.createClass({
     return (
       <div>
         {detail}
-        <RecipeDetailFooter id={this.props.id} edit={this.state.edit} />
+        <RecipeDetailFooter id={this.props.id} edit={this.state.edit} save={this.save}/>
       </div>
     );
   }
