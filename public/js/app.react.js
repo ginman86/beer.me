@@ -43505,12 +43505,12 @@ var MainSideNav = React.createClass({displayName: "MainSideNav",
 
     return (
       React.createElement("div", {className: "side-nav col-md-2 col-lg-2 col-sm-2"}, 
-        React.createElement(Nav, {bsStyle: "pills", stacked: true, activeKey: 1}, 
-          React.createElement(NavItemLink, {eventKey: 1, to: "recipes"}, "Recipes"), 
+        React.createElement(Nav, {bsStyle: "pills", stacked: true}, 
+          React.createElement(NavItem, {eventKey: 1, disabled: true}, "Recipes"), 
           React.createElement(NavItemLink, {eventKey: 2, to: "recipes", query: {favorite: true}}, "Favorites"), 
           React.createElement(NavItemLink, {eventKey: 3, to: "recipes", query: {brewed: false}}, "To-Brew"), 
           React.createElement(NavItem, {eventKey: 4, disabled: true}, "Categories"), 
-          React.createElement(Nav, {className: categoryClasses, bsStyle: "pills", stacked: true, activeKey: 1}, 
+          React.createElement(Nav, {className: categoryClasses, bsStyle: "pills", stacked: true}, 
             categories
           )
         )
