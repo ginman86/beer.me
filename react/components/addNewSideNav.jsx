@@ -14,6 +14,10 @@ var NavItemLink     = RouterBs.NavItemLink;
 
 var MainSideNav = React.createClass({
   mixins: [Reflux.connect(categoryStore, 'categories')],
+  setActiveCategory: function(a, b, c) {
+    //todo
+    console.log("Set Active Category", a, b,c);
+  },
   renderCategories: function() {
     var navItems,
         categories = this.state.categories;

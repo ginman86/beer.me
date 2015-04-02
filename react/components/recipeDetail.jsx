@@ -10,7 +10,10 @@ var _                   = require('lodash');
 var CategoryStore       = require('../stores/categoryStore');
 var RecipeActions       = require('../actions/recipeActions');
 var RecipeDetailFooter  = require('./recipeDetailFooter.jsx');
+var IngredientsPanel    = require('./ingredientsPanel.jsx');
+var DirectionsPanel     = require('./directionsPanel.jsx');
 var Input               = Bs.Input;
+var Accordion           = Bs.Accordion;
 var Navigation          = Router.Navigation;
 
 var RecipeDetail = React.createClass({
@@ -46,6 +49,15 @@ var RecipeDetail = React.createClass({
       this.transitionTo("/");
     }.bind(this));
   },
+  addIngredient: function(ingredientId, callback) {
+    console.log("add ingredient!!");
+    if (!_.any(this.props.recipe.ingredients, ingredientId)) {
+      this.props.recipe.ingredients.push(ingredientId);
+      callback(true);
+      return;
+    }
+    callback(false);
+  },
   renderCategories: function() {
     var categories = _.map(this.state.categories, function(category) {
       return(
@@ -64,6 +76,10 @@ var RecipeDetail = React.createClass({
           {this.renderCategories()}
         </Input>
         <Input ref="rating" type="text" label="Rating" defaultValue={this.props.recipe.rating} />
+        <Accordion>
+          <IngredientsPanel read-only="false" currentIngredients={this.props.recipe.ingredients} addIngredient={this.props.addIngredient}/>
+          <DirectionsPanel read-only="false" eventKey={2}/>
+        </Accordion>
       </form>);
   },
   renderReadOnly: function() {
@@ -75,6 +91,9 @@ var RecipeDetail = React.createClass({
         </div>
         <div>
           <span>Description: {this.props.recipe.description}</span>
+        </div>
+        <div>
+          <span>Rating {this.props.recipe.rating}</span>
         </div>
       </div>
     );

@@ -1,8 +1,12 @@
 'use strict';
 
-var Reflux            = require('reflux');
-var ingredientActions = require('../actions/ingredientActions');
 var _                 = require('lodash');
+var Reflux            = require('reflux');
+var Storage           = require('./localStore');
+
+var ingredientActions = require('../actions/ingredientActions');
+
+
 
 const FERMENTABLE = 1,
       HOP = 2,
@@ -27,13 +31,13 @@ var IngredientStore = Reflux.createStore({
     }.bind(this));
   },
   getIngredients: function(callback) {
-    storage.getItem('ingredients', function(err, value) {
+    Storage.getItem('ingredients', function(err, value) {
       if (!err && value !== null) {
         this._ingredients = value;
 
         callback(value);
       } else {
-        storage.setItem('ingredients', this.getIngredientsSeed(), function(err, value) {
+        Storage.setItem('ingredients', this.getIngredientsSeed(), function(err, value) {
           if (!err) {
             console.log("Ingredients successfully seeded.");
             this._ingredients = value;

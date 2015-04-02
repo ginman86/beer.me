@@ -43409,6 +43409,21 @@ module.exports = CategoryActions;
 var Reflux   = require('reflux');
 var _        = require('lodash');
 
+var IngredientActions = Reflux.createActions([
+  'addIngredient',
+  'removeIngredient',
+  'editIngredient',
+  'updateIngredients'
+]);
+
+module.exports = IngredientActions;
+
+},{"lodash":10,"reflux":279}],301:[function(require,module,exports){
+'use strict';
+
+var Reflux   = require('reflux');
+var _        = require('lodash');
+
 var RecipeActions = Reflux.createActions([
   'addRecipe',
   'removeRecipe',
@@ -43418,7 +43433,7 @@ var RecipeActions = Reflux.createActions([
 
 module.exports = RecipeActions;
 
-},{"lodash":10,"reflux":279}],301:[function(require,module,exports){
+},{"lodash":10,"reflux":279}],302:[function(require,module,exports){
 'use strict';
 
 var React           = require('react');
@@ -43461,7 +43476,139 @@ Router.run(Routes, function (Handler, state) {
 });
 
 
-},{"./components/mainSideNav.jsx":302,"./components/mainTopNav.jsx":303,"./components/recipeDetail.jsx":304,"./components/recipeList.jsx":306,"react":278,"react-router":104,"reflux":279}],302:[function(require,module,exports){
+},{"./components/mainSideNav.jsx":306,"./components/mainTopNav.jsx":307,"./components/recipeDetail.jsx":308,"./components/recipeList.jsx":310,"react":278,"react-router":104,"reflux":279}],303:[function(require,module,exports){
+var React         = require('react');
+
+var DirectionsDetail = React.createClass({displayName: "DirectionsDetail",
+  render: function() {
+    return (
+      React.createElement("div", null, 
+        "Directions!"
+      ));
+  }
+});
+
+module.exports = DirectionsDetail;
+},{"react":278}],304:[function(require,module,exports){
+var React         = require('react');
+var Bs            = require('react-bootstrap');
+
+var DirectionsDetail  = require('./directionsDetail.jsx');
+
+var Panel    = Bs.Panel;
+
+var DirectionsPanel = React.createClass({displayName: "DirectionsPanel",
+  renderDetails: function() {
+    return "derp";
+  },
+  render: function() {
+    return (
+      React.createElement(Panel, React.__spread({},  this.props, {header: "Directions"}), 
+        this.renderDetails()
+      ));
+  }
+});
+
+module.exports = DirectionsPanel;
+},{"./directionsDetail.jsx":303,"react":278,"react-bootstrap":61}],305:[function(require,module,exports){
+var _             = require('lodash');
+var React         = require('react');
+var Reflux        = require('reflux');
+var Bs            = require('react-bootstrap');
+
+var Panel         = Bs.Panel;
+var ListGroup     = Bs.ListGroup;
+var ListGroupItem = Bs.ListGroupItem;
+var Glyphicon     = Bs.Glyphicon;
+var DropdownButton = Bs.DropdownButton;
+var MenuItem       = Bs.MenuItem;
+var Input          = Bs.Input;
+
+var IngredientStore = require('../stores/ingredientStore');
+
+var IngredientsPanel = React.createClass({displayName: "IngredientsPanel",
+  mixins: [Reflux.connect(IngredientStore, 'allIngredients')],
+  getInitialState: function() {
+    return {
+      search: ""
+    }
+  },
+  filterExisting: function() {
+    return _.filter(this.state.allIngredients, function(ingredient) {
+      console.log(!_.any(this.props.currentIngredients, ingredient.id))
+      return !_.any(this.props.currentIngredients, ingredient.id);
+    });
+  },
+  search: function(e) {
+    var searchTerm = e.currentTarget.value;
+
+    console.log("Searching", searchTerm);
+
+    if (typeof searchTerm === "string") {
+      this.setState({
+        search: searchTerm.toLowerCase()
+      });
+    }
+  },
+  renderAvailableIngredients: function() {
+    var content,
+        ingredients;
+
+    ingredients = _.filter(this.state.allIngredients, function(ingredient) {
+      console.log(!_.any(this.props.currentIngredients, ingredient.id))
+      if (!_.any(this.props.currentIngredients, ingredient.id)) {
+        var name = ingredient.name.split(' '),
+            render = false;
+
+        if (name && name.length > 0) {
+          _.each(name, function(word) {
+            if (_.startsWith(word.toLowerCase(), this.state.search)) {
+              render = true;
+              return false;
+            }
+          }.bind(this));
+        }
+
+        return render;
+      } else {
+        return false;
+      }
+    }.bind(this));
+
+    console.log("WUT")
+    //filter already added ingredients
+    content = _.map(ingredients, function(ingredient) {
+      return (React.createElement(MenuItem, {id: ingredient.id, onClick: this.props.addIngredient}, React.createElement(Glyphicon, {glyph: "plus"}), " ", ingredient.name));
+    }.bind(this));
+
+    return content;
+  },
+  renderDetails: function() {
+    var content;
+
+    content = _.map(this.state.ingredients, function(ingredient) {
+      return (React.createElement(ListGroupItem, {id: ingredient.id}, React.createElement(Glyphicon, {glyph: "plus"}), " ", ingredient.name));
+    });
+    return content;
+  },
+  render: function() {
+    var addIngredientClass = false,
+        cx = React.addons.classSet;
+
+    return (
+      React.createElement(Panel, React.__spread({},  this.props, {header: "Ingredients"}), 
+        React.createElement(DropdownButton, {bsStyle: "default", title: "+ Add new"}, 
+          React.createElement(Input, {type: "text", placeholder: "Search", addonBefore: React.createElement(Glyphicon, {glyph: "search"}), onChange: this.search}), 
+          this.renderAvailableIngredients()
+        ), 
+        React.createElement(ListGroup, {fill: true}
+        )
+      ));
+  }
+});
+
+module.exports = IngredientsPanel;
+},{"../stores/ingredientStore":313,"lodash":10,"react":278,"react-bootstrap":61,"reflux":279}],306:[function(require,module,exports){
 'use strict';
 
 var React           = require('react/addons');
@@ -43478,10 +43625,6 @@ var NavItemLink     = RouterBs.NavItemLink;
 
 var MainSideNav = React.createClass({displayName: "MainSideNav",
   mixins: [Reflux.connect(categoryStore, 'categories')],
-  setActiveCategory: function(a, b, c) {
-    //todo
-    console.log("Set Active Category", a, b,c);
-  },
   renderCategories: function() {
     var navItems,
         categories = this.state.categories;
@@ -43525,7 +43668,7 @@ module.exports = MainSideNav;
 
 
 
-},{"../actions/categoryActions":299,"../stores/categoryStore":308,"lodash":10,"react-bootstrap":61,"react-router-bootstrap":76,"react/addons":117,"reflux":279}],303:[function(require,module,exports){
+},{"../actions/categoryActions":299,"../stores/categoryStore":312,"lodash":10,"react-bootstrap":61,"react-router-bootstrap":76,"react/addons":117,"reflux":279}],307:[function(require,module,exports){
 'use strict';
 
 var React           = require('react');
@@ -43581,7 +43724,7 @@ var MainTopNav = React.createClass({displayName: "MainTopNav",
 });
 
 module.exports = MainTopNav;
-},{"../actions/recipeActions":300,"react":278,"react-bootstrap":61,"react-router":104,"reflux":279}],304:[function(require,module,exports){
+},{"../actions/recipeActions":301,"react":278,"react-bootstrap":61,"react-router":104,"reflux":279}],308:[function(require,module,exports){
 'use strict';
 
 var React               = require('react');
@@ -43594,7 +43737,10 @@ var _                   = require('lodash');
 var CategoryStore       = require('../stores/categoryStore');
 var RecipeActions       = require('../actions/recipeActions');
 var RecipeDetailFooter  = require('./recipeDetailFooter.jsx');
+var IngredientsPanel    = require('./ingredientsPanel.jsx');
+var DirectionsPanel     = require('./directionsPanel.jsx');
 var Input               = Bs.Input;
+var Accordion           = Bs.Accordion;
 var Navigation          = Router.Navigation;
 
 var RecipeDetail = React.createClass({displayName: "RecipeDetail",
@@ -43630,6 +43776,15 @@ var RecipeDetail = React.createClass({displayName: "RecipeDetail",
       this.transitionTo("/");
     }.bind(this));
   },
+  addIngredient: function(ingredientId, callback) {
+    console.log("add ingredient!!");
+    if (!_.any(this.props.recipe.ingredients, ingredientId)) {
+      this.props.recipe.ingredients.push(ingredientId);
+      callback(true);
+      return;
+    }
+    callback(false);
+  },
   renderCategories: function() {
     var categories = _.map(this.state.categories, function(category) {
       return(
@@ -43647,7 +43802,11 @@ var RecipeDetail = React.createClass({displayName: "RecipeDetail",
         React.createElement(Input, {ref: "category", type: "select", label: "Category", defaultValue: this.props.recipe.category.id}, 
           this.renderCategories()
         ), 
-        React.createElement(Input, {ref: "rating", type: "text", label: "Rating", defaultValue: this.props.recipe.rating})
+        React.createElement(Input, {ref: "rating", type: "text", label: "Rating", defaultValue: this.props.recipe.rating}), 
+        React.createElement(Accordion, null, 
+          React.createElement(IngredientsPanel, {"read-only": "false", currentIngredients: this.props.recipe.ingredients, addIngredient: this.props.addIngredient}), 
+          React.createElement(DirectionsPanel, {"read-only": "false", eventKey: 2})
+        )
       ));
   },
   renderReadOnly: function() {
@@ -43659,6 +43818,9 @@ var RecipeDetail = React.createClass({displayName: "RecipeDetail",
         ), 
         React.createElement("div", null, 
           React.createElement("span", null, "Description: ", this.props.recipe.description)
+        ), 
+        React.createElement("div", null, 
+          React.createElement("span", null, "Rating ", this.props.recipe.rating)
         )
       )
     );
@@ -43684,7 +43846,7 @@ var RecipeDetail = React.createClass({displayName: "RecipeDetail",
 module.exports = RecipeDetail;
 
 
-},{"../actions/recipeActions":300,"../stores/categoryStore":308,"./recipeDetailFooter.jsx":305,"lodash":10,"react":278,"react-bootstrap":61,"react-router":104,"reflux":279}],305:[function(require,module,exports){
+},{"../actions/recipeActions":301,"../stores/categoryStore":312,"./directionsPanel.jsx":304,"./ingredientsPanel.jsx":305,"./recipeDetailFooter.jsx":309,"lodash":10,"react":278,"react-bootstrap":61,"react-router":104,"reflux":279}],309:[function(require,module,exports){
 'use strict';
 
 var React         = require('react');
@@ -43723,7 +43885,7 @@ var RecipeDetailFooter = React.createClass({displayName: "RecipeDetailFooter",
 module.exports = RecipeDetailFooter;
 
 
-},{"react":278,"react-bootstrap":61,"react-router-bootstrap":76}],306:[function(require,module,exports){
+},{"react":278,"react-bootstrap":61,"react-router-bootstrap":76}],310:[function(require,module,exports){
 'use strict';
 
 var React         = require('react');
@@ -43850,7 +44012,7 @@ var RecipeList = React.createClass({displayName: "RecipeList",
 module.exports = RecipeList;
 
 
-},{"../actions/recipeActions":300,"../stores/recipeStore":310,"./recipeDetail.jsx":304,"./recipeListItem.jsx":307,"lodash":10,"react":278,"react-bootstrap":61,"react-router":104,"reflux":279}],307:[function(require,module,exports){
+},{"../actions/recipeActions":301,"../stores/recipeStore":315,"./recipeDetail.jsx":308,"./recipeListItem.jsx":311,"lodash":10,"react":278,"react-bootstrap":61,"react-router":104,"reflux":279}],311:[function(require,module,exports){
 'use strict';
 
 var React   = require('react');
@@ -43880,7 +44042,7 @@ module.exports = RecipeListItem;
 
 
 
-},{"react":278,"react-bootstrap":61,"react-router":104}],308:[function(require,module,exports){
+},{"react":278,"react-bootstrap":61,"react-router":104}],312:[function(require,module,exports){
 'use strict';
 
 var Reflux          = require('reflux');
@@ -43952,7 +44114,128 @@ var CategoryStore = Reflux.createStore({
 
 module.exports = CategoryStore;
 
-},{"../actions/categoryActions":299,"./localStore":309,"lodash":10,"reflux":279}],309:[function(require,module,exports){
+},{"../actions/categoryActions":299,"./localStore":314,"lodash":10,"reflux":279}],313:[function(require,module,exports){
+'use strict';
+
+var _                 = require('lodash');
+var Reflux            = require('reflux');
+var Storage           = require('./localStore');
+
+var ingredientActions = require('../actions/ingredientActions');
+
+
+
+const FERMENTABLE = 1,
+      HOP = 2,
+      YEAST = 3,
+      EXTRA = 4;
+
+var IngredientStore = Reflux.createStore({
+  listenables: [ingredientActions],
+  getInitialState: function() {
+    return this._ingredients;
+  },
+  onUpdateIngredients: function(ingredients) {
+    this.updateIngredients(ingredients);
+  },
+  updateIngredients: function(ingredients) {
+    this._ingredients = ingredients;
+    this.trigger(this._ingredients);
+  },
+  init: function() {
+    this.getIngredients(function(ingredients) {
+      this.updateIngredients(ingredients);
+    }.bind(this));
+  },
+  getIngredients: function(callback) {
+    Storage.getItem('ingredients', function(err, value) {
+      if (!err && value !== null) {
+        this._ingredients = value;
+
+        callback(value);
+      } else {
+        Storage.setItem('ingredients', this.getIngredientsSeed(), function(err, value) {
+          if (!err) {
+            console.log("Ingredients successfully seeded.");
+            this._ingredients = value;
+          } else {
+            console.error("Error seeding ingredients");
+          }
+        })
+      }
+    }.bind(this));
+  },
+  getIngredientsSeed: function() {
+    //database or localstorage
+    return [
+    {
+      id: 1,
+      type: FERMENTABLE,
+      name: "Caramel Pils"
+    },
+    {
+      id: 2,
+      type: FERMENTABLE,
+      name: "Flaked Barley"
+    },
+    {
+      id: 3,
+      type: FERMENTABLE,
+      name: "Honey"
+    },
+    {
+      id: 4,
+      type: FERMENTABLE,
+      name: "Pale 2-Row"
+    },
+    {
+      id: 5,
+      type: HOP,
+      name: "Apollo"
+    },
+    {
+      id: 6,
+      type: HOP,
+      name: "Citra"
+    },
+    {
+      id: 7,
+      type: HOP,
+      name: "Fuggle"
+    },
+    {
+      id: 8,
+      type: HOP,
+      name: "Sterling"
+    },
+    {
+      id: 9,
+      type: YEAST,
+      name: "Belgian Abbey Wyeast 1214"
+    },
+    {
+      id: 10,
+      type: YEAST,
+      name: "Dry Belgian Ale The Yeast Bay"
+    },
+    {
+      id: 11,
+      type: YEAST,
+      name: "French Saison Wyeast 3711"
+    },
+    {
+      id: 12,
+      type: YEAST,
+      name: "Vermont Ale The Yeast Bay"
+    }]
+  }
+});
+
+
+
+module.exports = IngredientStore;
+
+},{"../actions/ingredientActions":300,"./localStore":314,"lodash":10,"reflux":279}],314:[function(require,module,exports){
 var localforage = require('localforage');
 
 localforage.config({
@@ -43964,14 +44247,14 @@ localforage.config({
 });
 
 module.exports = localforage;
-},{"localforage":8}],310:[function(require,module,exports){
+},{"localforage":8}],315:[function(require,module,exports){
 'use strict';
 
+var _               = require('lodash');
 var Reflux          = require('reflux');
 var RecipeActions   = require('../actions/recipeActions');
 var CategoryStore   = require('./categoryStore');
 var Storage         = require('./localStore');
-var _               = require('lodash');
 
 var RecipeStore = Reflux.createStore({
   listenables: [RecipeActions],
@@ -44014,7 +44297,8 @@ var RecipeStore = Reflux.createStore({
       category: {},
       rating: null,
       brewed: false,
-      favorite: false
+      favorite: false,
+      ingredients: []
     });
 
     callback(id);
@@ -44080,7 +44364,8 @@ var RecipeStore = Reflux.createStore({
       categoryId: 1,
       rating: 4,
       brewed: false,
-      favorite: true
+      favorite: true,
+      ingredients: [1,4,5]
     },
     {
       id: 2,
@@ -44089,7 +44374,8 @@ var RecipeStore = Reflux.createStore({
       categoryId: 2,
       rating: 3,
       brewed: true,
-      favorite: true
+      favorite: true,
+      ingredients: []
     },
     {
       id: 3,
@@ -44098,10 +44384,11 @@ var RecipeStore = Reflux.createStore({
       categoryId: 3,
       rating: 1,
       brewed: false,
-      favorite: false
+      favorite: false,
+      ingredients: [2,3]
     }];
   }
 });
 
 module.exports = RecipeStore;
-},{"../actions/recipeActions":300,"./categoryStore":308,"./localStore":309,"lodash":10,"reflux":279}]},{},[301]);
+},{"../actions/recipeActions":301,"./categoryStore":312,"./localStore":314,"lodash":10,"reflux":279}]},{},[302]);

@@ -1,10 +1,10 @@
 'use strict';
 
+var _               = require('lodash');
 var Reflux          = require('reflux');
 var RecipeActions   = require('../actions/recipeActions');
 var CategoryStore   = require('./categoryStore');
 var Storage         = require('./localStore');
-var _               = require('lodash');
 
 var RecipeStore = Reflux.createStore({
   listenables: [RecipeActions],
@@ -47,7 +47,8 @@ var RecipeStore = Reflux.createStore({
       category: {},
       rating: null,
       brewed: false,
-      favorite: false
+      favorite: false,
+      ingredients: []
     });
 
     callback(id);
@@ -113,7 +114,8 @@ var RecipeStore = Reflux.createStore({
       categoryId: 1,
       rating: 4,
       brewed: false,
-      favorite: true
+      favorite: true,
+      ingredients: [1,4,5]
     },
     {
       id: 2,
@@ -122,7 +124,8 @@ var RecipeStore = Reflux.createStore({
       categoryId: 2,
       rating: 3,
       brewed: true,
-      favorite: true
+      favorite: true,
+      ingredients: []
     },
     {
       id: 3,
@@ -131,7 +134,8 @@ var RecipeStore = Reflux.createStore({
       categoryId: 3,
       rating: 1,
       brewed: false,
-      favorite: false
+      favorite: false,
+      ingredients: [2,3]
     }];
   }
 });
